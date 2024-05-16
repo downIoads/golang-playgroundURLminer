@@ -9,6 +9,9 @@ import (
 	"io"
 	"strings"
 	"time"
+	
+	"io/ioutil"
+
 )
 
 const (
@@ -18,7 +21,7 @@ const (
 	maxSnippetSize = 64 * 1024
 	
 	alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" // chars of randomly generated comment
-	length = 32 // length of randomly generated comment
+	length = 16 // length of randomly generated comment
 )
 
 type snippet struct {
@@ -52,28 +55,15 @@ func GetURL(content string) string {
 
 func main() {
 	mymath.Seed(time.Now().UnixNano()) // seed the math crypto
-	targetURLPrefix := "godev" // 5 chars takes around 1 minute on my pc (case insensitive search)
+	targetURLPrefix := "test"
 	startTime := time.Now() // its fun to see how long it took to find cool url
 	caseSensitiveSearch := true
 	
 	for {
-		//randomString := getRandomString()
 		randomString := getRandomStringFast()
-
-		// ctrl+A ctrl+C from playground and ensure that here you use multiline string
-		content := `// You can edit this code!
-// Click here and start typing.
-package main
-
-import "fmt"
-
-func main() {
-	fmt.Println("godev")
-}
-
-// ` + randomString + "\n"
-		
 		// ensure automatically generate comment has newline appended cuz that gets added if someone runs the code on the website (if you share after running it should not change the url)
+		content := ReadCodeFromFile() + randomString + "\n"
+
 		url := GetURL(content)
 		var success bool
 		if caseSensitiveSearch {
@@ -139,7 +129,22 @@ func startsWithSensitive(substring, str string) bool {
 	return strings.HasPrefix(str, substring)
 }
 
+func ReadCodeFromFile() string {
+	filePath := "code.txt"
+	content, err := ioutil.ReadFile(filePath)
+    if err != nil {
+        panic(err)
+    }
+	contentString := string(content)
+	
+	// line below is crucial on windows to replace the windows style newlines \r\n with the \n newlines the playground uses
+	contentCleaned := strings.ReplaceAll(contentString, "\r\n", "\n")
+	
+	return string(contentCleaned)
+
+}
+
 // cool urls (url: randomString):
 	// godev: 	dcldvjfxjcxybjrujmxu
-        // godev: 	kzEwmLGqHukdxWtdthHPKYCgyBgXEgym
-	
+	// godev: 	kzEwmLGqHukdxWtdthHPKYCgyBgXEgym
+	// TooEZ:   qrhpduNNvjBfmVvH  					[took 6 min]
